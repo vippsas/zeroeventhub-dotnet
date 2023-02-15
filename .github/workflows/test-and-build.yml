@@ -1,0 +1,56 @@
+name: Test and build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  run-test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+  lint-code-base:
+    name: Lint code base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+      - name: Verify no changes
+        id: lint-code
+        shell: pwsh
+        run: |
+          $FILES = $(dotnet format --verify-no-changes) 2>&1
+          if (-not [string]::IsNullOrEmpty($FILES))
+          {
+            "FILES<<EOF" >> $env:GITHUB_ENV
+            Write-Output $FILES >> $env:GITHUB_ENV
+            "EOF" >> $env:GITHUB_ENV
+            exit 1
+          }
+
+      - name: Write summary on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          Write-Output "## Linting failed" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "Run ``dotnet format`` to fix it" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "``````" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "${{ env.FILES }}" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "``````" >> $env:GITHUB_STEP_SUMMARY
