@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <PackageId>ZeroEventHubClient</PackageId>
+        <Version>1.0.0</Version>
+        <Company>Vipps MobilePay</Company>
+        <Authors>Vipps MobilePay</Authors>
+        <PackageDescription>Broker-less event streaming over HTTP</PackageDescription>
+        <PackageProjectUrl>https://github.com/vippsas/zeroeventhub-dotnet</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/vippsas/zeroeventhub-dotnet</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>event-streaming</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroEventHubClient", "src\ZeroEventHubClient\ZeroEventHubClient.csproj", "{5F805E71-96D7-4307-9689-B99E41147731}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroEventHubClientTests", "tests\ZeroEventHubClientTests\ZeroEventHubClientTests.csproj", "{308D756C-3040-4057-8447-82CEFD017D17}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F805E71-96D7-4307-9689-B99E41147731}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F805E71-96D7-4307-9689-B99E41147731}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F805E71-96D7-4307-9689-B99E41147731}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F805E71-96D7-4307-9689-B99E41147731}.Release|Any CPU.Build.0 = Release|Any CPU
+		{308D756C-3040-4057-8447-82CEFD017D17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308D756C-3040-4057-8447-82CEFD017D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308D756C-3040-4057-8447-82CEFD017D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308D756C-3040-4057-8447-82CEFD017D17}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
