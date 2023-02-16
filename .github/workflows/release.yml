@@ -31,4 +31,4 @@ jobs:
 
     - name: Upload NuGet package to nuget.org
       run: |
-        nuget push out/*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+        nuget push out/* -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}} -SkipDuplicate
