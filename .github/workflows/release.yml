@@ -1,0 +1,34 @@
+name: Release 🚀
+on:
+  release:
+    types: [published]
+
+jobs:
+  create-new-release:
+    name: Create new release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Create NuGet pakcage
+      run: |
+        dotnet pack -c Release -o out --no-restore
+
+    - name: Upload to release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG: ${{ github.event.release.tag_name }}
+      run: |
+        gh release upload $TAG out/* --clobber
+
+    - name: Upload NuGet package to nuget.org
+      run: |
+        nuget push out/*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
