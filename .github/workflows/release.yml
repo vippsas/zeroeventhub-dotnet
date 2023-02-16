@@ -22,13 +22,13 @@ jobs:
       run: |
         dotnet pack -c Release -o out --no-restore
 
-    - name: Upload to release
+    - name: Upload to GitHub release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAG: ${{ github.event.release.tag_name }}
       run: |
         gh release upload $TAG out/* --clobber
 
-    - name: Upload NuGet package to nuget.org
+    - name: Upload to nuget.org
       run: |
         nuget push out/* -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}} -SkipDuplicate
