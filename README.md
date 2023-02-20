@@ -1,7 +1,7 @@
 # ZeroEventHub
 [![NuGet version (ZeroEventHubClient)](https://img.shields.io/nuget/v/ZeroEventHubClient.svg?style=flat-square)](https://www.nuget.org/packages/ZeroEventHubClient/)
 
-This README file contains information specific to the `dotnet` port of the ZeroEventHub. Please see the [main repository](https://github.com/vippsas/zeroeventhub) for an overview of what this project is about.
+This repository contains information specific to the `dotnet` port of the ZeroEventHub. Please see the [main repository](https://github.com/vippsas/zeroeventhub) for an overview of what this project is about.
 
 ## Client
 
