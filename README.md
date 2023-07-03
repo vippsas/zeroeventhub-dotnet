@@ -12,7 +12,7 @@ We recommend that you store the latest checkpoint/cursor for each partition in t
 
 ```csharp
 // Step 1: Setup
-const int TheirPartitionCount = 1 //documented contract with server
+const int TheirPartitionCount = 1; //documented contract with server
 var requestCallback = new Func<HttpRequestMessage, Task>(message =>
 {
     // you can setup the authentication on the request
@@ -31,7 +31,7 @@ if (!cursor.Any()){
 while (ShouldContinue)
 {
     // Step 4: Use ZeroEventHub client to fetch the next page of events.
-    var eventReceiver = EventReceiver<MyDataType>()
+    var eventReceiver = new EventReceiver<MyDataType>();
     await client.FetchEvents(cursors, MyPageHint, eventReceiver);
 
     // Step 5: Write the effect of changes to our own database and the updated
