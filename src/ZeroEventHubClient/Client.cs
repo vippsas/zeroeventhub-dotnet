@@ -78,8 +78,7 @@ public class Client
         IEventReceiver eventReceiver,
         CancellationToken cancellationToken = default)
     {
-        var cursors = new List<Cursor> { cursor };
-        await FetchEvents(cursors, pageSizeHint, eventReceiver, new List<string>(), cancellationToken);
+        await FetchEvents(new [] {cursor}, pageSizeHint, eventReceiver, new List<string>(), cancellationToken);
     }
 
     /// <inheritdoc cref="FetchEvents(System.Collections.Generic.IReadOnlyCollection{ZeroEventHubClient.Models.Cursor},int,ZeroEventHubClient.Models.IEventReceiver)"/>
