@@ -66,7 +66,7 @@ public class Client
     /// Fetch events from the server
     /// </summary>
     /// <param name="cursor">A single cursor to be used in the request.</param>
-    /// <param name="pageSizeHint">An hint for the page size of the response.
+    /// <param name="pageSizeHint">A hint for the page size of the response.
     /// Set to 0 if the server should decide the size returned</param>
     /// <param name="eventReceiver">An event receiver to handle the received events.</param>
     /// <exception cref="ArgumentException">If cursors are missing.</exception>
