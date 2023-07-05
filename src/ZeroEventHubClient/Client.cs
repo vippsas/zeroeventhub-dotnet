@@ -62,6 +62,25 @@ public class Client
         await FetchEvents(cursors, pageSizeHint, eventReceiver, new List<string>(), cancellationToken);
     }
 
+    /// <summary>
+    /// Fetch events from the server
+    /// </summary>
+    /// <param name="cursor">A single cursor to be used in the request.</param>
+    /// <param name="pageSizeHint">A hint for the page size of the response.
+    /// Set to 0 if the server should decide the size returned</param>
+    /// <param name="eventReceiver">An event receiver to handle the received events.</param>
+    /// <exception cref="ArgumentException">If cursors are missing.</exception>
+    /// <exception cref="MalformedResponseException">If returned response body could not be parsed.</exception>
+    /// <exception cref="HttpRequestException">If response status code does not indicate success.</exception>
+    public async Task FetchEvents(
+        Cursor cursor,
+        int pageSizeHint,
+        IEventReceiver eventReceiver,
+        CancellationToken cancellationToken = default)
+    {
+        await FetchEvents(new[] { cursor }, pageSizeHint, eventReceiver, new List<string>(), cancellationToken);
+    }
+
     /// <inheritdoc cref="FetchEvents(System.Collections.Generic.IReadOnlyCollection{ZeroEventHubClient.Models.Cursor},int,ZeroEventHubClient.Models.IEventReceiver)"/>
     /// <param name="headers">An optional sequence containing event headers desired in the response.</param>
     public async Task FetchEvents(
