@@ -8,7 +8,7 @@ using ZeroEventHubClient.Models;
 namespace ZeroEventHubClient;
 
 [SuppressMessage("ReSharper", "InvalidXmlDocComment")]
-public class Client
+public class Client : IClient
 {
     private readonly HttpClient _httpClient;
     private readonly Uri _uri;
