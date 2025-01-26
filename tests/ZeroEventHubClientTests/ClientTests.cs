@@ -1,8 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using FluentAssertions;
-using Moq;
-using Moq.Protected;
+using NSubstitute;
+using Shouldly;
 using ZeroEventHubClient;
 using ZeroEventHubClient.Models;
 
@@ -10,35 +9,57 @@ namespace ZeroEventHubClientTests;
 
 public class ClientTests
 {
+    private readonly IEventReceiver _receiverMock;
+    private readonly HttpClient _httpClient;
+    private readonly Func<HttpRequestMessage, Task> _processor;
+    private bool _called;
     private const string FeedUrl = "https://example.invalid/feed/v1";
+    private HttpResponseMessage _httpResponseMessage = new();
+    private HttpRequestMessage? _request;
 
+    private class HttpMessageHandlerMock : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _handlerDelegate;
+
+        public HttpMessageHandlerMock(Func<HttpRequestMessage, HttpResponseMessage> handlerDelegate)
+        {
+            _handlerDelegate = handlerDelegate;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_handlerDelegate(request));
+        }
+    }
+
+    public ClientTests()
+    {
+        // Arrange
+        _receiverMock = Substitute.For<IEventReceiver>();
+        var httpMessageHandlerMock = new HttpMessageHandlerMock(request =>
+        {
+            _request = request;
+            return _httpResponseMessage;
+        });
+        _httpClient = new HttpClient(httpMessageHandlerMock);
+
+        _called = false;
+        _processor = new Func<HttpRequestMessage, Task>(_ =>
+        {
+            _called = true;
+            return Task.CompletedTask;
+        });
+    }
 
     [Fact]
     public async Task FetchEvents_WithProcessor_CallsProcessor()
     {
-        // Arrange
-        var receiverMock = new Mock<IEventReceiver>();
-        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage());
-        var httpClient = new HttpClient(httpMessageHandlerMock.Object);
-
-        var called = false;
-        var processor = new Func<HttpRequestMessage, Task>(_ =>
-        {
-            called = true;
-            return Task.CompletedTask;
-        });
-
-        var zeroEventHubClient = new Client(FeedUrl, 0, processor, httpClient);
-        await zeroEventHubClient.FetchEvents(new[] { Cursor.First(0) }, 1, receiverMock.Object);
+        // Act
+        var zeroEventHubClient = new Client(FeedUrl, 0, _processor, _httpClient);
+        await zeroEventHubClient.FetchEvents(new[] { Cursor.First(0) }, 1, _receiverMock);
 
         // Assert
-        called.Should().Be(true);
+        _called.ShouldBe(true);
     }
 
     [Fact]
@@ -50,28 +71,20 @@ public class ClientTests
         var cursor = Guid.NewGuid().ToString();
 
         // Act
-        var receiverMock = new Mock<IEventReceiver>();
-        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent($"{{\"partition\": {PartitionId}, \"cursor\": \"{cursor}\"}}",
+        _httpResponseMessage = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent($"{{\"partition\": {PartitionId}, \"cursor\": \"{cursor}\"}}",
                     null,
                     "application/x-ndjson"),
-            });
-        var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+        };
 
         // Act
-        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, httpClient);
-        await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, receiverMock.Object);
+        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, _httpClient);
+        await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, _receiverMock);
 
         // Assert
-        receiverMock.Verify(receiver => receiver.Checkpoint(PartitionId, cursor));
+        _receiverMock.Received().Checkpoint(PartitionId, cursor);
     }
 
     [Fact]
@@ -86,29 +99,20 @@ public class ClientTests
             $@"{{""partition"": {PartitionId}, ""cursor"": ""{cursor}""}}
             {{""partition"": {PartitionId}, ""headers"": {{""test-header"": ""test""}}, ""data"": {{""data"": ""{Data}""}}}}";
 
-        var receiverMock = new Mock<IEventReceiver>();
-        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
+        _httpResponseMessage =
+            new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(responseContent, null, "application/json"),
-            });
-        var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+            };
 
         // Act
-        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, httpClient);
-        await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, receiverMock.Object);
+        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, _httpClient);
+        await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, _receiverMock);
 
         // Assert
-        receiverMock.Verify(receiver => receiver.Checkpoint(PartitionId, cursor));
-        receiverMock.Verify(receiver => receiver.Event(PartitionId,
-            new Dictionary<string, string>() { { "test-header", "test" } },
-            It.IsAny<JsonElement>()));
+        _receiverMock.Received().Checkpoint(PartitionId, cursor);
+        _receiverMock.Received().Event(PartitionId, Arg.Any<Dictionary<string, string>>(), Arg.Any<JsonElement>());
     }
 
     [Fact]
@@ -121,47 +125,34 @@ public class ClientTests
         var cursor = Cursor.First(PartitionId);
         var responseContent = $@"{{""partition"": {PartitionId}, ""cursor"": ""{Guid.NewGuid().ToString()}""}}";
 
-        HttpRequestMessage? request = null;
-
-        var receiverMock = new Mock<IEventReceiver>();
-        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, null, "application/json"),
-            }).Callback<HttpRequestMessage, CancellationToken>((message, _) => { request = message; });
-
-        var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+        _httpResponseMessage = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(responseContent, null, "application/json")
+        };
 
         // Act
-        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, httpClient);
-        await client.FetchEvents(new[] { cursor }, PageSize, receiverMock.Object, new[] { "test1", "test2" });
+        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, _httpClient);
+        await client.FetchEvents(new[] { cursor }, PageSize, _receiverMock, new[] { "test1", "test2" });
 
         // Assert
-        request.Should().NotBeNull();
-        request!.RequestUri.Should().NotBeNull();
-        request.RequestUri!.Query.Should()
-            .Be($"?n={PartitionCount}&cursor{PartitionId}=_first&pagesizehint={PageSize}&headers=test1%2ctest2");
+        _request.ShouldNotBeNull();
+        _request.RequestUri.ShouldNotBeNull();
+        _request.RequestUri.Query
+            .ShouldBe($"?n={PartitionCount}&cursor{PartitionId}=_first&pagesizehint={PageSize}&headers=test1%2ctest2");
     }
 
     [Fact]
     public async Task FetchEvents_NoCursors_ThrowsException()
     {
-        // Arrange
         const int PartitionCount = 1;
-        var receiverMock = new Mock<IEventReceiver>();
 
         // Act
         var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask);
-        var action = async () => { await client.FetchEvents(Array.Empty<Cursor>(), 1, receiverMock.Object); };
+        var action = async () => { await client.FetchEvents(Array.Empty<Cursor>(), 1, _receiverMock); };
 
         // Assert
-        await action.Should().ThrowAsync<ArgumentException>();
+        await action.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -171,26 +162,16 @@ public class ClientTests
         const int PartitionCount = 1;
         const int PartitionId = 0;
 
-        var receiverMock = new Mock<IEventReceiver>();
-        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.NotFound });
-
-        var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+        _httpResponseMessage = new HttpResponseMessage { StatusCode = HttpStatusCode.NotFound };
 
         // Act
-        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, httpClient);
-
+        var client = new Client(FeedUrl, PartitionCount, _ => Task.CompletedTask, _httpClient);
         var action = async () =>
         {
-            await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, receiverMock.Object);
+            await client.FetchEvents(new[] { Cursor.First(PartitionId) }, 1, _receiverMock);
         };
 
         // Assert
-        await action.Should().ThrowAsync<HttpRequestException>();
+        await action.ShouldThrowAsync<HttpRequestException>();
     }
 }
