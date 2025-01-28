@@ -57,6 +57,6 @@ public class EventReceiverTests
         eventReceiver.Checkpoints.Count.ShouldBe(6);
 
         var latestCheckpoints = eventReceiver.LatestCheckpoints;
-        latestCheckpoints.ShouldBe(new Cursor[]{new(0, "latest0"), new(1, "latest1")});
+        latestCheckpoints.ShouldBe(new Cursor[] { new(0, "latest0"), new(1, "latest1") });
     }
 }
