@@ -57,8 +57,6 @@ public class EventReceiverTests
         eventReceiver.Checkpoints.Count.ShouldBe(6);
 
         var latestCheckpoints = eventReceiver.LatestCheckpoints;
-        latestCheckpoints.Count.ShouldBe(2);
-        latestCheckpoints.Where(cursor => cursor is { PartitionId: 0, Value: "latest0" }).ShouldHaveSingleItem();
-        latestCheckpoints.Where(cursor => cursor is { PartitionId: 1, Value: "latest1" }).ShouldHaveSingleItem();
+        latestCheckpoints.ShouldBe(new Cursor[]{new(0, "latest0"), new(1, "latest1")});
     }
 }
