@@ -1,5 +1,5 @@
 using System.Text.Json;
-using FluentAssertions;
+using Shouldly;
 using ZeroEventHubClient.Models;
 
 namespace ZeroEventHubClientTests;
@@ -32,13 +32,13 @@ public class EventReceiverTests
         }
 
         var events = eventReceiver.Events.ToList();
-        events.Count.Should().Be(3);
+        events.Count.ShouldBe(3);
 
         foreach (var id in partitionIds)
         {
-            events[id].PartitionId.Should().Be(id);
-            events[id].Headers.Should().BeSameAs(headers);
-            events[id].Data.Value.Should().Be(testData);
+            events[id].PartitionId.ShouldBe(id);
+            events[id].Headers.ShouldBeSameAs(headers);
+            events[id].Data.Value.ShouldBe(testData);
         }
     }
 
@@ -54,11 +54,9 @@ public class EventReceiverTests
         eventReceiver.Checkpoint(1, "second1");
         eventReceiver.Checkpoint(1, "latest1");
 
-        eventReceiver.Checkpoints.Count.Should().Be(6);
+        eventReceiver.Checkpoints.Count.ShouldBe(6);
 
         var latestCheckpoints = eventReceiver.LatestCheckpoints;
-        latestCheckpoints.Count.Should().Be(2);
-        latestCheckpoints.Should().ContainSingle(cursor => cursor.PartitionId == 0 && cursor.Value == "latest0");
-        latestCheckpoints.Should().ContainSingle(cursor => cursor.PartitionId == 1 && cursor.Value == "latest1");
+        latestCheckpoints.ShouldBe(new Cursor[] { new(0, "latest0"), new(1, "latest1") });
     }
 }
