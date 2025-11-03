@@ -1,3 +1,9 @@
+# Archived
+
+This project has been archived and is no longer updated. Consumers should migrate to something implementing the Feed API spec instead, which is the successor to ZeroEventHub.
+
+See https://github.com/vippsas/feedapi-spec
+
 # ZeroEventHub
 [![NuGet version (ZeroEventHubClient)](https://img.shields.io/nuget/v/ZeroEventHubClient.svg?style=flat-square)](https://www.nuget.org/packages/ZeroEventHubClient/)
 
